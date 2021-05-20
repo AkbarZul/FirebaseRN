@@ -1,5 +1,14 @@
 import React, {Component} from 'react';
-import {Alert, Button, StyleSheet, Text, TextInput, View} from 'react-native';
+import {
+  Alert,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import firebase from './Firebase';
 
@@ -9,6 +18,14 @@ export class Depan extends Component {
     listRencanaAktivitas: [],
   };
 
+  namaTable = 'listRencanaAktivitas';
+
+  componentDidMount() {
+    let rencana = firebase.database().ref('/' + this.namaTabel);
+    rencana.once('value').then(snapshot => {
+      this.setState({listRencanaAktivitas: snapshot.val()});
+    });
+  }
   tambahRencana = () => {
     if (this.state.rencana === '') {
       alert('Silahkan Masukan Rencana');
@@ -17,18 +34,20 @@ export class Depan extends Component {
     // membuat table pada firebase
     firebase
       .database()
-      .ref('/listRencanaAktivitas')
+      .ref('/' + this.namaTable)
       .push({
         aktivitas: this.state.rencana,
         sudah: false,
       })
       .then(() => {
         alert('berhasil create aktivitas');
-        let rencana = firebase.database().ref('/listRencanaAktivitas');
+        let rencana = firebase.database().ref('/' + this.namaTabel);
         rencana.once('value').then(snapshot => {
           this.setState({
             listRencanaAktivitas: snapshot.val(),
           });
+
+          console.log(snapshot.val());
         });
         this.setState({
           rencana: '',
@@ -39,9 +58,29 @@ export class Depan extends Component {
       });
   };
   render() {
+    let keyFirebase = [];
+    if (this.state.listRencanaAktivitas) {
+      keyFirebase = Object.keys(this.state.listRencanaAktivitas);
+    }
+    console.log(keyFirebase);
     return (
       <View style={styles.viewWrapper}>
-        <View style={styles.viewAktifitas}></View>
+        <View style={styles.viewAktifitas}>
+          <ScrollView
+            scrollEnabled
+            showsVerticalScrollIndicator
+            stickyHeaderIndices>
+            {keyFirebase.map(item => {
+              <TouchableOpacity key={item}>
+                <View style={styles.viewItem}>
+                  <Text style={{color: 'black'}}>
+                    {this.state.listRencanaAktivitas[item].aktivitas}
+                  </Text>
+                </View>
+              </TouchableOpacity>;
+            })}
+          </ScrollView>
+        </View>
         <View style={styles.tombol}>
           <TextInput
             style={styles.textInput}
